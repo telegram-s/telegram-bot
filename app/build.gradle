@@ -6,3 +6,10 @@ version = '1.0'
 repositories {
     mavenCentral()
 }
+
+dependencies {
+    compile project(':tl-core')
+    compile project(':mtproto')
+    compile files('../libraries/telegram-api/libs/tl-api-v10.jar')
+    compile project(':telegram-api')
+}
