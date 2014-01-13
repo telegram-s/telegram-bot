@@ -1,0 +1,6 @@
+[submodule "libraries/telegram-api"]
+	path = libraries/telegram-api
+	url = https://github.com/ex3ndr/telegram-api.git
+[submodule "libraries/mtproto"]
+	path = libraries/mtproto
+	url = https://github.com/ex3ndr/telegram-mt.git
