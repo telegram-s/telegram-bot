@@ -4,3 +4,6 @@
 [submodule "libraries/mtproto"]
 	path = libraries/mtproto
 	url = https://github.com/ex3ndr/telegram-mt.git
+[submodule "libraries/tl-core"]
+	path = libraries/tl-core
+	url = https://github.com/ex3ndr/telegram-tl-core.git
