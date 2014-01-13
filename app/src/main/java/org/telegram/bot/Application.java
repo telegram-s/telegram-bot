@@ -211,8 +211,17 @@ public class Application {
         });
     }
 
-    private static void createApi() {
-        apiState = new MemoryApiState();
+    private static void createApi() throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        System.out.print("Use test DC? (write test for test servers): ");
+        String res = reader.readLine();
+        boolean useTest = res.equals("test");
+        if (!useTest) {
+            System.out.println("Using production servers");
+        } else {
+            System.out.println("Using test servers");
+        }
+        apiState = new MemoryApiState(useTest);
         api = new TelegramApi(apiState, new AppInfo(5, "console", "???", "???", "en"), new ApiCallback() {
 
             @Override
@@ -238,7 +247,6 @@ public class Application {
 
     private static void login() throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-
         System.out.print("Loading fresh DC list...");
         TLConfig config = api.doRpcCallNonAuth(new TLRequestHelpGetConfig());
         apiState.updateSettings(config);

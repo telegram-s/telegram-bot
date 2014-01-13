@@ -21,9 +21,9 @@ public class MemoryApiState implements AbsApiState {
 
     private int primaryDc = 1;
 
-    public MemoryApiState() {
+    public MemoryApiState(boolean isTest) {
         connections.put(1, new ConnectionInfo[]{
-                new ConnectionInfo(1, 0, "173.240.5.1", 443)
+                new ConnectionInfo(1, 0, isTest ? "173.240.5.253" : "173.240.5.1", 443)
         });
     }
 
