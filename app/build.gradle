@@ -1,7 +1,8 @@
-apply plugin: 'java'
+apply plugin:'application'
 
 sourceCompatibility = 1.5
 version = '1.0'
+mainClassName = "org.telegram.bot.Application"
 
 repositories {
     mavenCentral()
@@ -13,3 +14,10 @@ dependencies {
     compile files('../libraries/telegram-api/libs/tl-api-v10.jar')
     compile project(':telegram-api')
 }
+
+task copyToLib( type: Copy ) {
+    into "$buildDir/libs/lib"
+    from configurations.runtime
+}
+
+jar { dependsOn copyToLib }
