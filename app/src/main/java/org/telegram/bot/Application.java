@@ -4,6 +4,7 @@ import org.telegram.api.*;
 import org.telegram.api.auth.TLAuthorization;
 import org.telegram.api.auth.TLSentCode;
 import org.telegram.api.engine.*;
+import org.telegram.api.messages.TLAbsSentMessage;
 import org.telegram.api.requests.*;
 import org.telegram.api.updates.TLState;
 import org.telegram.bot.engine.MemoryApiState;
@@ -83,11 +84,44 @@ public class Application {
     }
 
     private static void sendMessageChat(int chatId, String message) {
-        api.doRpcCallWeak(new TLRequestMessagesSendMessage(new TLInputPeerChat(chatId), message, rnd.nextInt()));
+        api.doRpcCall(new TLRequestMessagesSendMessage(new TLInputPeerChat(chatId), message, rnd.nextInt()),
+                15 * 60000,
+                new RpcCallbackEx<TLAbsSentMessage>() {
+                    @Override
+                    public void onConfirmed() {
+
+                    }
+
+                    @Override
+                    public void onResult(TLAbsSentMessage result) {
+
+                    }
+
+                    @Override
+                    public void onError(int errorCode, String message) {
+                    }
+                });
     }
 
     private static void sendMessageUser(int uid, String message) {
-        api.doRpcCallWeak(new TLRequestMessagesSendMessage(new TLInputPeerContact(uid), message, rnd.nextInt()));
+        api.doRpcCall(new TLRequestMessagesSendMessage(new TLInputPeerContact(uid), message, rnd.nextInt()),
+                15 * 60000,
+                new RpcCallbackEx<TLAbsSentMessage>() {
+                    @Override
+                    public void onConfirmed() {
+
+                    }
+
+                    @Override
+                    public void onResult(TLAbsSentMessage result) {
+
+                    }
+
+                    @Override
+                    public void onError(int errorCode, String message) {
+
+                    }
+                });
     }
 
     private static void onIncomingMessageUser(int uid, String message) {
@@ -115,6 +149,22 @@ public class Application {
         }
     }
 
+    private static String getWalkerString(int len, int position) {
+        int realPosition = position % len * 2;
+        if (realPosition > len) {
+            realPosition = len - (realPosition - len);
+        }
+        String res = "|";
+        for (int i = 0; i < realPosition; i++) {
+            res += ".";
+        }
+        res += "\uD83D\uDEB6";
+        for (int i = realPosition + 1; i < len; i++) {
+            res += ".";
+        }
+        return res + "|";
+    }
+
     private static void processCommand(String message, PeerState peerState) {
         String[] args = message.split(" ");
         if (args.length == 0) {
@@ -130,11 +180,18 @@ public class Application {
         } else if (command.equals("random")) {
             if (args.length == 2) {
                 int count = Integer.parseInt(args[1].trim());
-                sendMessage(peerState, "Random: " + (generateRandomString(count)));
+                if (count <= 0) {
+                    count = 32;
+                }
+                if (count > 4 * 1024) {
+                    sendMessage(peerState, WarAndPeace.ANGRY);
+                } else {
+                    sendMessage(peerState, "Random: " + (generateRandomString(count)));
+                }
             } else {
                 sendMessage(peerState, "Random: " + (generateRandomString(32)));
             }
-        } else if (command.equals("start_spam")) {
+        } else if (command.equals("start_flood")) {
             int delay = 15;
             if (args.length == 2) {
                 delay = Integer.parseInt(args[1].trim());
@@ -142,10 +199,37 @@ public class Application {
             peerState.setMessageSendDelay(delay);
             peerState.setSpamEnabled(true);
             peerState.setLastMessageSentTime(0);
-            sendMessage(peerState, "Spam enabled with delay " + delay + " sec");
-        } else if (command.equals("stop_spam")) {
+            sendMessage(peerState, "Flood enabled with delay " + delay + " sec");
+        } else if (command.equals("stop_flood")) {
             peerState.setSpamEnabled(false);
-            sendMessage(peerState, "Spam disabled");
+            sendMessage(peerState, "Flood disabled");
+        } else if (command.equals("ping")) {
+            for (int i = 0; i < 50; i++) {
+                sendMessage(peerState, "pong " + getWalkerString(10, i) + " #" + i);
+                try {
+                    Thread.sleep(20);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else if (command.equals("war_ping")) {
+            for (int i = 0; i < 50; i++) {
+                sendMessage(peerState, WarAndPeace.TEXT2);
+            }
+        } else if (command.equals("war")) {
+            sendMessage(peerState, WarAndPeace.TEXT2);
+        } else if (command.equals("war2")) {
+            sendMessage(peerState, WarAndPeace.TEXT);
+        } else if (command.equals("help")) {
+            sendMessage(peerState, "Bot commands:\n" +
+                    "bot enable_forward/disable_forward - forwarding of incoming messages\n" +
+                    "bot start_flood [delay] - Start flood with [delay] sec (default = 15)\n" +
+                    "bot stop_flood - Stop flood\n" +
+                    "bot random [len] - Write random string of length [len] (default = 32)\n" +
+                    "bot ping - ping with 50 pongs\n" +
+                    "bot war - war and peace fragment\n" +
+                    "bot war2 - alternative war and peace fragment (currently unable to send)\n" +
+                    "bot war_ping - ping with 50 war and peace fragments\n");
         } else {
             sendMessage(peerState, "Unknown command '" + args[0] + "'");
         }
@@ -160,7 +244,7 @@ public class Application {
                         if (System.currentTimeMillis() - state.getLastMessageSentTime() > state.getMessageSendDelay() * 1000L) {
                             int messageId = state.getMessagesSent() + 1;
                             state.setMessagesSent(messageId);
-                            sendMessage(state, "Spam #" + messageId + ": " + generateRandomString(32));
+                            sendMessage(state, "Flood " + getWalkerString(10, messageId) + " #" + messageId);
                             state.setLastMessageSentTime(System.currentTimeMillis());
                         }
                     }
