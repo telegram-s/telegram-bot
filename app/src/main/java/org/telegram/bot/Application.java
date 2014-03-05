@@ -4,7 +4,9 @@ import org.telegram.api.*;
 import org.telegram.api.auth.TLAuthorization;
 import org.telegram.api.auth.TLSentCode;
 import org.telegram.api.engine.*;
+import org.telegram.api.engine.file.Uploader;
 import org.telegram.api.messages.TLAbsSentMessage;
+import org.telegram.api.messages.TLAbsStatedMessage;
 import org.telegram.api.requests.*;
 import org.telegram.api.updates.TLState;
 import org.telegram.bot.engine.MemoryApiState;
@@ -17,6 +19,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * Created by ex3ndr on 13.01.14.
@@ -28,6 +32,7 @@ public class Application {
     private static TelegramApi api;
     private static Random rnd = new Random();
     private static long lastOnline = System.currentTimeMillis();
+    private static Executor mediaSender = Executors.newSingleThreadExecutor();
 
     public static void main(String[] args) throws IOException {
         disableLogging();
@@ -73,6 +78,27 @@ public class Application {
         }
 
         return chatStates.get(chatId);
+    }
+
+    private static void sendMedia(PeerState peerState, String fileName) {
+        TLAbsInputPeer inputPeer = peerState.isUser() ? new TLInputPeerContact(peerState.getId()) : new TLInputPeerChat(peerState.getId());
+
+        int task = api.getUploader().requestTask(fileName, null);
+        api.getUploader().waitForTask(task);
+        int resultState = api.getUploader().getTaskState(task);
+        Uploader.UploadResult result = api.getUploader().getUploadResult(task);
+        TLAbsInputFile inputFile;
+        if (result.isUsedBigFile()) {
+            inputFile = new TLInputFileBig(result.getFileId(), result.getPartsCount(), "file.jpg");
+        } else {
+            inputFile = new TLInputFile(result.getFileId(), result.getPartsCount(), "file.jpg", result.getHash());
+        }
+        try {
+            TLAbsStatedMessage res = api.doRpcCall(new TLRequestMessagesSendMedia(inputPeer, new TLInputMediaUploadedPhoto(inputFile), rnd.nextInt()), 30000);
+            res.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void sendMessage(PeerState peerState, String message) {
@@ -165,7 +191,7 @@ public class Application {
         return res + "|";
     }
 
-    private static void processCommand(String message, PeerState peerState) {
+    private static void processCommand(String message, final PeerState peerState) {
         String[] args = message.split(" ");
         if (args.length == 0) {
             sendMessage(peerState, "Unknown command");
@@ -229,7 +255,26 @@ public class Application {
                     "bot ping - ping with 50 pongs\n" +
                     "bot war - war and peace fragment\n" +
                     "bot war2 - alternative war and peace fragment (currently unable to send)\n" +
-                    "bot war_ping - ping with 50 war and peace fragments\n");
+                    "bot war_ping - ping with 50 war and peace fragments\n" +
+                    "bot img - sending sample image\n" +
+                    "bot img50 - sending sample image\n");
+
+        } else if (command.equals("img")) {
+            mediaSender.execute(new Runnable() {
+                @Override
+                public void run() {
+                    sendMedia(peerState, "demo.jpg");
+                }
+            });
+        } else if (command.equals("img50")) {
+            for (int i = 0; i < 50; i++) {
+                mediaSender.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        sendMedia(peerState, "demo.jpg");
+                    }
+                });
+            }
         } else {
             sendMessage(peerState, "Unknown command '" + args[0] + "'");
         }
