@@ -23,7 +23,14 @@ public class MemoryApiState implements AbsApiState {
 
     public MemoryApiState(boolean isTest) {
         connections.put(1, new ConnectionInfo[]{
-                new ConnectionInfo(1, 0, isTest ? "173.240.5.253" : "173.240.5.1", 443)
+//                new ConnectionInfo(1, 0, isTest ? "173.240.5.253" : "173.240.5.1", 443)
+                new ConnectionInfo(1, 0, isTest ? "149.154.167.40" : "149.154.167.50", 443)
+                /*
+                 * The old Datacenter-IPs didn't work anymore (upper line), so I updated these hardcoded
+                 * settings with some new Datacenter-IPs. I took the IPs of the test server and the
+                 * production server of DC 2, which were offered to me in my telegram app center
+                 * (https://my.telegram.org/apps)
+                 */
         });
     }
 

@@ -2,6 +2,7 @@ package org.telegram.bot;
 
 import org.telegram.api.*;
 import org.telegram.api.auth.TLAuthorization;
+import org.telegram.api.auth.TLCheckedPhone;
 import org.telegram.api.auth.TLSentCode;
 import org.telegram.api.engine.*;
 import org.telegram.api.engine.file.Uploader;
@@ -382,6 +383,13 @@ public class Application {
         System.out.println("completed.");
         System.out.print("Phone number for bot:");
         String phone = reader.readLine();
+        try {
+			TLCheckedPhone myPhone = api.doRpcCallNonAuth(new TLRequestAuthCheckPhone("+491773888644"));
+			System.out.println("Info for phone: Invited: " + String.valueOf(myPhone.getPhoneInvited()) + ", registered: " + String.valueOf(myPhone.getPhoneRegistered()));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         System.out.print("Sending sms to phone " + phone + "...");
         TLSentCode sentCode;
         try {
